@@ -1,0 +1,279 @@
+{
+  "name": "News Digest",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 10
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -336,
+        -16
+      ],
+      "id": "724e4514-a3a3-4894-85f1-627870b1cf2c",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "url": "https://fetchrss.com/feed/1vUOh1A328dG1vUPaH9oA32x.rss",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        -80,
+        -144
+      ],
+      "id": "8d810c24-39b1-4fe5-9521-c224ab778506",
+      "name": "RSS Read1"
+    },
+    {
+      "parameters": {
+        "url": "https://fetchrss.com/feed/1vUOh1A328dG1vUPYSGNH5gI.rss",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        -80,
+        16
+      ],
+      "id": "35865402-ade9-405f-bb2a-b9d11ef3dbec",
+      "name": "RSS Read2"
+    },
+    {
+      "parameters": {
+        "url": "https://fetchrss.com/feed/1vUOh1A328dG1vUOew2hA9AK.rss",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        -80,
+        192
+      ],
+      "id": "c5b9e861-fe18-453a-b470-fc691d6a218e",
+      "name": "RSS Read 3"
+    },
+    {
+      "parameters": {
+        "numberInputs": 3
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        240,
+        0
+      ],
+      "id": "601ba0aa-4fce-4e9e-8dae-06c81bee7ae6",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "fieldsToAggregate": {
+          "fieldToAggregate": [
+            {
+              "fieldToAggregate": "title"
+            },
+            {
+              "fieldToAggregate": "link"
+            },
+            {
+              "fieldToAggregate": "content"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        480,
+        16
+      ],
+      "id": "ad2732ce-b7f1-4973-85cc-ce0d3b9a0370",
+      "name": "Aggregate"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Ты — редактор, создающий дайджесты для Telegram. Создай пост на основе данных ниже.\n\n**Исходные данные:**\nТебе будет передан массив с постами из разных Telegram-каналов. Каждый пост содержит:\n• {{ $json.title }} — заголовок поста.\n• {{ $json.link }} — прямая ссылка на пост.\n• {{ $json.content }} — текст для анализа.\n\n**Правила форматирования поста:**\n\n**1. Начало**\nНачни с броского заголовка, например:\n📰 Дайджест за день\n🔥 Главное сейчас\n\n**2. Общее саммари**\nСледующим абзацем напиши краткую общую сводку (2–4 предложения). Выдели ключевые темы или тренды, которые охватывают все посты. Не упоминай названия каналов в этом блоке.\n\n**3. Список постов (основная часть)**\n• Сгруппируй посты по каналам.\n• Для каждой группы укажи:\n  **Название канала** — (количество постов)\n• Для каждого поста внутри группы используй формат:\n  • **Ключевая мысль:** Краткое описание в одно предложение на основе {{ $json.content }}. 🔗 [Читать]({{ $json.link }})\n• Между разными каналами оставляй пустую строку.\n\n**4. Оформление**\n• Выделяй **названия каналов** и **ключевые мысли** в описаниях жирным.\n• В конце добавь хэштеги, например: #дайджест #новости\n\n**Пример структуры:**\n[Броский заголовок]\n\n[Общее саммари 2-4 предложения.]\n\n**Канал 1** — (2 поста)\n• **Запуск новой функции:** Описание в одно предложение. 🔗 [Читать](ссылка1)\n• **Итоги квартала:** Еще одно краткое описание. 🔗 [Читать](ссылка2)\n\n**Канал 2** — (1 пост)\n• **Новый тренд:** Описание поста. 🔗 [Читать](ссылка3)\n\n#дайджест #новости\n\nТеперь сформируй пост на основе предоставленных данных.",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        688,
+        16
+      ],
+      "id": "43b37f1e-4ece-4158-9e1b-e234a0341558",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "GigaChat/GigaChat-2-Max",
+          "mode": "list",
+          "cachedResultName": "GigaChat/GigaChat-2-Max"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        688,
+        208
+      ],
+      "id": "82d21c85-cca6-42ad-9e92-e2811d2d7f2b",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "XdYlMinP70WDHwXb",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "-1002280670511",
+        "text": "={{ $json.output }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1040,
+        16
+      ],
+      "id": "92efcf21-8928-45ac-a47d-26d2742d317c",
+      "name": "Send a text message",
+      "webhookId": "4833674e-d964-4776-a49e-9b7b9a2dd7b7",
+      "credentials": {
+        "telegramApi": {
+          "id": "HSDJl8WfPLdXpw8q",
+          "name": "Telegram account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "RSS Read 3",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "RSS Read2",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "RSS Read1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RSS Read1": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RSS Read2": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "RSS Read 3": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "06f855ad-96f9-449b-919b-e7f8cd42fb12",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "e00bf10055158732c9c2f8ed47bb56832813181d7552c1aa9dc4b0ab57e04ae7"
+  },
+  "id": "NtiS44um4kbcghjv",
+  "tags": []
+}
