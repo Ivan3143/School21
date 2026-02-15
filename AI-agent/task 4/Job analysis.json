@@ -1,0 +1,325 @@
+{
+  "name": "Job analysis",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks",
+              "triggerAtHour": 10
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -432,
+        -64
+      ],
+      "id": "6d40464a-7015-4d7d-9f56-314d18a828de",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "operation": "formatDate",
+        "date": "={{ $json.timestamp }}",
+        "format": "yyyy-MM-dd",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dateTime",
+      "typeVersion": 2,
+      "position": [
+        -208,
+        -64
+      ],
+      "id": "dc8fb61b-35d1-4c27-b880-0a00c066d68d",
+      "name": "Date & Time"
+    },
+    {
+      "parameters": {
+        "url": "https://api.hh.ru/vacancies",
+        "sendQuery": true,
+        "specifyQuery": "json",
+        "jsonQuery": "={\n  \"text\": \"DevOps\",\n  \"area\": 2,\n  \"search_field\": \"name\",\n  \"date_from\": \"{{ $json.formattedDate }}\",\n  \"per_page\": 50,\n  \"page\": 0\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -16,
+        -64
+      ],
+      "id": "429f49b1-48be-49a0-be4a-f2c284fc8801",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "items",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        240,
+        -64
+      ],
+      "id": "becc3966-2ece-4890-acd7-2045b361094f",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        448,
+        -64
+      ],
+      "id": "24afc7c6-85ef-44e5-8d67-dfb72ae78a96",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.hh.ru/vacancies/{{ $json.id }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        720,
+        -48
+      ],
+      "id": "6cd417b8-a362-43c4-92e8-205187a03bb9",
+      "name": "HTTP Request1"
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "destinationFieldName": "vacancies",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        608,
+        -336
+      ],
+      "id": "eaccea7c-7f62-4c9f-aacf-94160c9e171d",
+      "name": "Aggregate"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const vacancy = $json;\n\nlet result = {\n  id: vacancy.id,\n  title: vacancy.name,\n  company: vacancy.employer?.name,\n  skills: vacancy.key_skills?.map(s => s.name) || [],\n  experience: vacancy.experience?.name,\n  description: \"\"\n};\n\nif (vacancy.description) {\n  result.description = vacancy.description.replace(/<[^>]*>/g, ' ').trim();\n}\n\nreturn { json: result };"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        896,
+        -48
+      ],
+      "id": "72b7df65-e237-483f-8fed-31683cbff2c5",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=количество вакансий: {{ $json.vacancies.length }}\nнабор навыков: {{ $json.vacancies.map(v => v.skills).flat().filter(skill => skill) }}",
+        "options": {
+          "systemMessage": "Задача: На основе предоставленных данных сформировать пост-дайджест в заданном формате. Ключевой фокус — на точности, нормализации данных и четкой структуре.\n\nВходные данные:\n\nНазвание направления (например, «Python-разработчик», «Data Analyst», «ML Engineer»).\n\nОбщее количество (N) обработанных вакансий за неделю.\n\nСписок сырых (raw) требований/навыков, извлеченных из вакансий, в формате: [ [\"навык1\", \"навык2\", ...], [\"навык3\", \"навык1\", ...], ... ], где каждый подсписок — это набор навыков из одной вакансии.\n\nИнструкции по обработке (Конвейер контроля качества):\n\nНормализация и очистка каждого навыка:\n\nПривести к нижнему регистру.\n\nУдалить лишние пробелы в начале и конце.\n\nКритически важный шаг — приведение к единому нормативному виду:\n\npython, питон, python3, пайтон -> python.\n\npostgresql, postgres -> postgresql.\n\ndocker, docker контейнеры -> docker.\n\nml, machine learning, машинное обучение -> machine learning.\n\nsql (но ms sql -> ms sql или sql server).\n\nРаздели составные навыки (например, python/django) на отдельные: python, django.\n\nПодсчет частотности:\n\nПройди по всем навыкам во всех вакансиях после нормализации.\n\nПодсчитай, сколько раз каждый уникальный нормализованный навык встречается в общей массе.\n\nУбери из подсчета слишком общие или нерелевантные слова (например, опыт, разработка, умение, галочка), если они не являются ключевыми для направления.\n\nФормирование итогового списка:\n\nОтсортируй навыки по частоте встречаемости по убыванию.\n\nСтрогий формат вывода (не изменяй структуру и формулировки):\n\ntext\nНа этой неделе я спарсил [N] свежих вакансий по направлению «[Название направления]». Самыми популярными являются следующие требования:\n\n[Нормализованное требование 1]: [частота 1] раз\n[Нормализованное требование 2]: [частота 2] раз\n[Нормализованное требование 3]: [частота 3] раз\nи так далее\n\nКонтроль качества перед выводом:\n\nПроверь, что [N] соответствует реальному количеству обработанных вакансий.\n\nУбедись, что навыки представлены в нормализованном виде.\n\nПроверь грамматику: «раз» для числительных склоняется корректно.\n\nНазвание направления должно быть в кавычках-«ёлочках».\n\nТекст выводится без заголовка \"Примечание:\""
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        816,
+        -336
+      ],
+      "id": "849f606a-09eb-4a5f-b4bf-9b029139edf4",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "GigaChat/GigaChat-2-Max",
+          "mode": "list",
+          "cachedResultName": "GigaChat/GigaChat-2-Max"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        816,
+        -176
+      ],
+      "id": "14293392-c7e4-47e7-b4cc-58ad9cfd1501",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "XdYlMinP70WDHwXb",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "=-1002280670511",
+        "text": "={{ $json.output }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1168,
+        -336
+      ],
+      "id": "3785bde4-b071-43d9-a5b7-69af171e04f2",
+      "name": "Send a text message",
+      "webhookId": "892999dc-18e6-45e0-9843-69c496e6c99d",
+      "credentials": {
+        "telegramApi": {
+          "id": "HSDJl8WfPLdXpw8q",
+          "name": "Telegram account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Date & Time",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Date & Time": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "1ba3447c-0259-4e0a-bb69-f95809860171",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "e00bf10055158732c9c2f8ed47bb56832813181d7552c1aa9dc4b0ab57e04ae7"
+  },
+  "id": "V1ikypxgIR938yWg",
+  "tags": []
+}
