@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="VcsDirectoryMappings">
+    <mapping directory="" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/DevOps/Linux/D01_Linux.ID_356272-1" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/DevOps/Linux/DO2_LinuxNetwork.ID_356275-1" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/DevOps/Linux/DO3_LinuxMonitoring_v1.0.ID_356278-1" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/DevOps/Linux/DO4_LinuxMonitoring_v2.0.ID_356280-1" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/DevOps/SQL/SQLB1_Basics.ID_574086-1" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/DevOps/SQL/SQLB2_Retrieving_data.ID_574087-1" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/DevOps/SQL/SQLB3_Retrieving_data.ID_574089-1" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/DevOps/SQL/SQLB4_DML.ID_574090-1" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/DevOps/SQL/SQLB5_Snapshots.ID_574092-1" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/DevOps/SQL/SQLB6_Salesman_problem.ID_795844-Team_TL_vuenteba.6f1ac545_d971_4aad-1" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/DevOps/SQL/SQLB7_Database_index.ID_574093-1" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/DevOps/SQL/SQLB8_Integrating_features.ID_574095-1" vcs="Git" />
+  </component>
+</project>
